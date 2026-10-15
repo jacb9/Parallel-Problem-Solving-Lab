@@ -1,0 +1,572 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Parallel Problem Solving Lab</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: lab-notebook page. Full-width header and experiment bar, then a controls column beside a results column (charts, network snapshots, readout). Stacks to one column on phones with results first. */
+:root{
+  --bg:#F1F4F6; --surface:#FFFFFF; --ink:#16202A; --muted:#566371; --line:#D5DCE2; --edge:#7D8A97;
+  --accent:#1D4E89; --accent-soft:#E2EAF4; --warn:#9A5B12;
+  --s1:#2563C9; --s2:#D9772B; --s3:#1F9A86; --s4:#B8408C; --s5:#6E7F1A;
+  --r-lo:#E3B23C; --r-mid:#3F9C83; --r-hi:#1E2F7A;
+  --f-display:"Newsreader", Georgia, "Times New Roman", serif;
+  --f-body:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#10161C; --surface:#18212A; --ink:#E6ECF1; --muted:#9AA8B5; --line:#2C3843; --edge:#8796A4;
+  --accent:#8DB6EE; --accent-soft:#1E2E42; --warn:#E3A55A;
+  --s1:#6EA1FF; --s2:#F2A15E; --s3:#4CC9B0; --s4:#E07BBE; --s5:#B5C451;
+  --r-lo:#B98A24; --r-mid:#3FB394; --r-hi:#B9D2FF; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#10161C; --surface:#18212A; --ink:#E6ECF1; --muted:#9AA8B5; --line:#2C3843; --edge:#8796A4;
+  --accent:#8DB6EE; --accent-soft:#1E2E42; --warn:#E3A55A;
+  --s1:#6EA1FF; --s2:#F2A15E; --s3:#4CC9B0; --s4:#E07BBE; --s5:#B5C451;
+  --r-lo:#B98A24; --r-mid:#3FB394; --r-hi:#B9D2FF; color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
+.wrap{max-width:1260px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header{padding-block:28px 18px}
+.cite{font-family:var(--f-mono);font-size:12px;color:var(--muted);letter-spacing:.02em}
+h1{font-family:var(--f-display);font-weight:600;font-size:clamp(30px,4.4vw,44px);line-height:1.08;margin:6px 0 10px;text-wrap:balance}
+h2{font-family:var(--f-display);font-weight:600;font-size:22px;margin:0 0 10px;text-wrap:balance}
+h3{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 8px;font-weight:600}
+.lede{max-width:68ch;color:var(--ink);margin:0}
+.presets{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 12px}
+.chip{font:500 13px var(--f-body);border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:7px 12px;border-radius:999px;cursor:pointer}
+.chip small{font-family:var(--f-mono);color:var(--muted);margin-left:6px;font-size:11px}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.chip[aria-pressed="true"] small{color:var(--surface);opacity:.8}
+.note{background:var(--accent-soft);border-radius:8px;padding:12px 14px;max-width:none;margin-bottom:20px}
+.note b{font-weight:600}
+.note p{margin:0;max-width:95ch}
+.main{display:grid;grid-template-columns:minmax(280px,340px) minmax(0,1fr);gap:20px;align-items:start;padding-bottom:28px}
+@media (max-width:880px){.main{grid-template-columns:minmax(0,1fr)} .controls{order:2}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px}
+.controls{display:flex;flex-direction:column;gap:14px}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label,.lbl{font-size:13px;font-weight:500}
+.field .hint{font-size:12px;color:var(--muted)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+select,input[type=number]{font:inherit;font-size:14px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink);width:100%}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.val{font-family:var(--f-mono);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.cond{border-top:1px solid var(--line);padding-top:12px;display:flex;flex-direction:column;gap:8px}
+.cond-head{display:flex;align-items:center;gap:8px}
+.sw{width:12px;height:12px;border-radius:3px;flex:none}
+.cond-head select{flex:1;min-width:0}
+.icon-btn{border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:6px;width:30px;height:30px;cursor:pointer;font-size:16px;line-height:1}
+.mini{display:grid;grid-template-columns:auto 1fr auto;gap:4px 8px;align-items:center;font-size:12px;color:var(--muted)}
+.btn{font:600 14px var(--f-body);padding:9px 14px;border-radius:7px;border:1px solid var(--accent);background:var(--accent);color:var(--surface);cursor:pointer}
+.btn.ghost{background:transparent;color:var(--accent)}
+.btn:disabled{opacity:.45;cursor:default}
+.btns{display:flex;flex-wrap:wrap;gap:8px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.results{display:flex;flex-direction:column;gap:16px;min-width:0}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.tab{font:500 13px var(--f-body);padding:6px 11px;border-radius:6px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}
+.tab[aria-selected="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.tab:disabled{opacity:.4;cursor:default}
+.status{font-size:12px;color:var(--muted);margin-left:auto;font-family:var(--f-mono)}
+.charts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+@media (max-width:640px){.charts{grid-template-columns:minmax(0,1fr)}}
+.chart canvas{width:100%;height:230px;display:block;touch-action:none;cursor:crosshair}
+.player{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.player input[type=range]{flex:1;min-width:160px}
+.tnum{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-size:14px;min-width:9ch}
+.nets{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
+.net{display:flex;flex-direction:column;gap:6px;min-width:0}
+.net canvas{width:100%;aspect-ratio:1;max-width:100%;display:block}
+.net .name{font-size:13px;font-weight:600;display:flex;gap:6px;align-items:center}
+.net .stat{font-family:var(--f-mono);font-size:11px;color:var(--muted)}
+.legend-ramp{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+.ramp{width:120px;height:8px;border-radius:4px;background:linear-gradient(90deg,var(--r-lo),var(--r-mid),var(--r-hi))}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+td.n{font-family:var(--f-mono);font-variant-numeric:tabular-nums;text-align:right}
+th.n{text-align:right}
+.progress{height:6px;background:var(--line);border-radius:3px;overflow:hidden}
+.progress>div{height:100%;width:0;background:var(--accent);transition:width .15s}
+.how{padding-block:8px 40px}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin-top:12px}
+.step{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px}
+.step .k{font-family:var(--f-mono);font-size:12px;color:var(--accent)}
+.step p{margin:6px 0 0;font-size:14px}
+.fine{font-size:13px;color:var(--muted);max-width:90ch;margin-top:16px}
+code,.mono{font-family:var(--f-mono);font-size:.92em}
+@media (prefers-reduced-motion: reduce){.progress>div{transition:none}}
+</style>
+
+<div class="wrap">
+<header>
+  <div class="cite">Lazer &amp; Friedman (2007) · “The Network Structure of Exploration and Exploitation” · ASQ 52: 667–694</div>
+  <h1>Parallel Problem Solving Lab</h1>
+  <p class="lede">A hundred agents work on the same rugged problem. Each round, an agent copies the best-performing contact it can see, and if none of its contacts is doing better, it tries changing one thing about its own solution. Conditions differ only in who can see whom. Run a contest and watch which network finds the better answer, and when.</p>
+</header>
+
+<div class="presets" id="presets" role="group" aria-label="Experiments"></div>
+<div class="note" id="note"></div>
+
+<div class="main">
+  <aside class="controls">
+    <div class="panel">
+      <h3>Problem space</h3>
+      <div class="field">
+        <div class="row2">
+          <div class="field"><label for="inN">N (choices)</label>
+            <select id="inN"></select></div>
+          <div class="field"><label for="inA">Agents</label>
+            <select id="inA"><option>50</option><option selected>100</option><option>200</option></select></div>
+        </div>
+        <span class="hint" id="nHint"></span>
+      </div>
+      <div class="field" style="margin-top:10px">
+        <label for="inK">K (interdependence) <span class="val" id="kVal"></span></label>
+        <input type="range" id="inK" min="0" max="9" step="1">
+        <span class="hint" id="kHint"></span>
+      </div>
+      <div class="field" style="margin-top:10px">
+        <label for="inT">Rounds <span class="val" id="tVal"></span></label>
+        <input type="range" id="inT" min="20" max="400" step="10">
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Conditions to compare</h3>
+      <div id="conds" style="display:flex;flex-direction:column;gap:12px"></div>
+      <div class="btns" style="margin-top:12px"><button class="btn ghost" id="addCond">Add condition</button></div>
+    </div>
+
+    <div class="panel">
+      <h3>Run</h3>
+      <div class="btns">
+        <button class="btn" id="newLand">New landscape</button>
+      </div>
+      <p class="hint" style="font-size:12px;color:var(--muted);margin:8px 0 14px">Draws a fresh problem and fresh starting solutions. All conditions always share both.</p>
+      <div class="field">
+        <label for="inL">Average over</label>
+        <div class="row2">
+          <select id="inL"><option value="10">10 landscapes</option><option value="25" selected>25 landscapes</option><option value="50">50 landscapes</option><option value="100">100 landscapes</option></select>
+          <button class="btn ghost" id="runAvg">Run average</button>
+        </div>
+        <div class="progress" id="prog" hidden><div></div></div>
+        <span class="hint" id="avgHint">Single landscapes are noisy. The paper averages 1,000.</span>
+      </div>
+    </div>
+  </aside>
+
+  <section class="results">
+    <div class="panel" style="display:flex;flex-direction:column;gap:14px">
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" id="tabSingle" aria-selected="true">This landscape</button>
+        <button class="tab" role="tab" id="tabAvg" aria-selected="false" disabled>Average</button>
+        <span class="status" id="status"></span>
+      </div>
+      <div class="charts">
+        <div class="chart"><h3>Average score</h3><canvas id="cScore" aria-label="Average score over time"></canvas></div>
+        <div class="chart"><h3>Distinct solutions in play</h3><canvas id="cUniq" aria-label="Number of distinct solutions over time"></canvas></div>
+      </div>
+      <div class="player">
+        <button class="btn" id="play">Play</button>
+        <span class="tnum" id="tLabel">Round 0</span>
+        <input type="range" id="scrub" min="0" max="100" value="0" aria-label="Round">
+        <select id="speed" aria-label="Playback speed" style="width:auto"><option value="160">Slow</option><option value="70" selected>Normal</option><option value="20">Fast</option></select>
+      </div>
+      <div class="tablewrap"><table id="readout"></table></div>
+    </div>
+
+    <div class="panel">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+        <h3 style="margin:0">Who holds what, at this round</h3>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <div class="legend-ramp" id="rampLegend"><span>low</span><span class="ramp"></span><span>high score</span></div>
+          <select id="colorBy" aria-label="Colour nodes by" style="width:auto"><option value="score">Colour by score</option><option value="sol">Colour by solution</option></select>
+        </div>
+      </div>
+      <div class="nets" id="nets"></div>
+      <p class="fine" style="margin-top:12px">Agents sit on a circle in index order; lines are communication ties. “Colour by solution” gives each distinct solution its own colour, so you can watch diversity collapse as the network converges.</p>
+    </div>
+
+    <div class="panel" id="winsPanel" hidden>
+      <h3>Head to head, final round</h3>
+      <p class="fine" style="margin:0 0 10px">Number of landscapes on which the row condition ended with a higher average score than the column condition (the format of the paper’s Appendix B). Ties are not counted.</p>
+      <div class="tablewrap"><table id="wins"></table></div>
+    </div>
+  </section>
+</div>
+
+<section class="how">
+  <h2>How the model works</h2>
+  <div class="steps">
+    <div class="step"><div class="k">1 · The problem</div><p>An NK landscape: N yes/no choices, so 2<sup>N</sup> possible solutions. Each choice’s payoff depends on K other choices. K = 0 gives one smooth peak; higher K gives many local peaks. Scores are shown as a share of the landscape’s best solution raised to the 8th power, as in the paper, so most random solutions score near zero.</p></div>
+    <div class="step"><div class="k">2 · The start</div><p>Every agent gets a random solution. Within a contest, every condition starts from the same solutions on the same landscape, so differences come from the network alone.</p></div>
+    <div class="step"><div class="k">3 · Each round</div><p>With probability equal to <b>velocity</b>, an agent checks its contacts. If one is doing better, it copies the best of them. With an <b>error rate</b> e, each differing choice fails to copy with probability e; if the resulting blend is worse, the agent keeps its own. Otherwise the agent flips one random choice and keeps the change only if it helps.</p></div>
+    <div class="step"><div class="k">4 · What we measure</div><p>The average score across all agents, and how many distinct solutions remain. The paper’s core result runs through the second number: efficient networks spread good ideas fast and also wipe out the variety needed to find better ones.</p></div>
+  </div>
+  <p class="fine"><b>Modeling choices not fixed by the paper.</b> All agents update at once from the previous round’s positions. An agent whose contacts score the same as it does explores rather than copies, which reproduces the “bouncing” the authors describe in fully connected networks. Small-world networks start from a ring where each agent talks to its two nearest neighbours on each side; a shortcut rewires one tie to a random distant agent, and rewirings that would cut someone off are skipped, as in the paper. Random networks are not forced to be connected, so sparse ones can split into isolated groups (the readout reports the number of components). Results from 25 or 50 landscapes will not match the paper’s figures exactly but should show the same patterns.</p>
+</section>
+</div>
+
+<script>
+(function(){
+"use strict";
+const $=s=>document.querySelector(s);
+
+/* ---------- RNG ---------- */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+
+/* ---------- NK landscape ---------- */
+function makeLandscape(N,K,seed){
+  const r=mulberry32(seed), D=K+1, T=1<<D;
+  const deps=new Int32Array(N*D), tab=new Float64Array(N*T);
+  for(let i=0;i<N;i++){
+    const o=[];for(let j=0;j<N;j++) if(j!==i) o.push(j);
+    for(let j=o.length-1;j>0;j--){const k=Math.floor(r()*(j+1));const tmp=o[j];o[j]=o[k];o[k]=tmp}
+    deps[i*D]=i; for(let d=1;d<D;d++) deps[i*D+d]=o[d-1];
+    for(let t=0;t<T;t++) tab[i*T+t]=r();
+  }
+  const L={N,K,D,T,deps,tab}; L.max=globalMax(L); return L;
+}
+function contrib(L,i,x){const D=L.D,o=i*D;let idx=0;for(let d=0;d<D;d++) idx|=((x>>L.deps[o+d])&1)<<d;return L.tab[i*L.T+idx]}
+function rawFit(L,x){let s=0;for(let i=0;i<L.N;i++) s+=contrib(L,i,x);return s/L.N}
+function globalMax(L){ // Gray-code walk over all 2^N solutions, updating only affected contributions
+  const N=L.N,D=L.D,aff=[];for(let b=0;b<N;b++) aff.push([]);
+  for(let i=0;i<N;i++) for(let d=0;d<D;d++) aff[L.deps[i*D+d]].push(i);
+  const affA=aff.map(a=>Int32Array.from(a));
+  const c=new Float64Array(N);let x=0,s=0;for(let i=0;i<N;i++){c[i]=contrib(L,i,0);s+=c[i]}
+  let best=s;const total=1<<N;
+  for(let k=1;k<total;k++){
+    const b=31-Math.clz32(k&-k);x^=1<<b;const a=affA[b];
+    for(let m=0;m<a.length;m++){const i=a[m];const v=contrib(L,i,x);s+=v-c[i];c[i]=v}
+    if(s>best) best=s;
+  }
+  return best/N;
+}
+
+/* ---------- Networks ---------- */
+const NETS={
+  linear:{label:"Linear"},
+  lattice:{label:"Lattice"},
+  smallworld:{label:"Small world",param:"shortcuts",def:10,min:0,max:150},
+  random:{label:"Random",param:"tie prob. %",def:7,min:1,max:100},
+  star:{label:"Hub and spoke"},
+  full:{label:"Fully connected"}
+};
+function connected(adj){const A=adj.length,seen=new Uint8Array(A),q=[0];seen[0]=1;let n=1;
+  while(q.length){const u=q.pop();for(const v of adj[u]) if(!seen[v]){seen[v]=1;n++;q.push(v)}}return n===A}
+function buildNet(type,param,A,rng){
+  const adj=[];for(let i=0;i<A;i++) adj.push(new Set());
+  const link=(a,b)=>{if(a!==b){adj[a].add(b);adj[b].add(a)}};
+  if(type==="linear") for(let i=0;i<A-1;i++) link(i,i+1);
+  else if(type==="full") for(let i=0;i<A;i++) for(let j=i+1;j<A;j++) link(i,j);
+  else if(type==="star") for(let i=1;i<A;i++) link(0,i);
+  else if(type==="random"){const p=param/100;for(let i=0;i<A;i++) for(let j=i+1;j<A;j++) if(rng()<p) link(i,j)}
+  else { // lattice / small world
+    for(let i=0;i<A;i++){link(i,(i+1)%A);link(i,(i+2)%A)}
+    if(type==="smallworld"){
+      let done=0,tries=0;
+      while(done<param&&tries<param*40+200){
+        tries++;
+        const u=Math.floor(rng()*A);if(!adj[u].size) continue;
+        const nb=[...adj[u]];const v=nb[Math.floor(rng()*nb.length)];
+        const w=Math.floor(rng()*A);if(w===u||adj[u].has(w)) continue;
+        adj[u].delete(v);adj[v].delete(u);link(u,w);
+        if(!connected(adj)){adj[u].delete(w);adj[w].delete(u);link(u,v);continue}
+        done++;
+      }
+    }
+  }
+  return adj.map(s=>Int32Array.from(s));
+}
+function netStats(adj){
+  const A=adj.length;let deg=0;for(const a of adj) deg+=a.length;
+  const edges=deg/2,density=edges/(A*(A-1)/2);
+  const comp=new Int32Array(A).fill(-1);let nc=0;
+  for(let s=0;s<A;s++){if(comp[s]>=0) continue;const q=[s];comp[s]=nc;while(q.length){const u=q.pop();for(const v of adj[u]) if(comp[v]<0){comp[v]=nc;q.push(v)}}nc++}
+  let sum=0,pairs=0;const dist=new Int32Array(A);
+  for(let s=0;s<A;s++){dist.fill(-1);dist[s]=0;const q=[s];let h=0;
+    while(h<q.length){const u=q[h++];for(const v of adj[u]) if(dist[v]<0){dist[v]=dist[u]+1;q.push(v);sum+=dist[v];pairs++}}}
+  return {edges,density,components:nc,path:pairs?sum/pairs:0};
+}
+function edgeList(adj){const e=[];for(let a=0;a<adj.length;a++) for(const b of adj[a]) if(a<b) e.push(a,b);return Int32Array.from(e)}
+
+/* ---------- Simulation ---------- */
+function runSim(L,adj,init,T,vel,err,rng,keep){
+  const A=init.length,N=L.N,mx=L.max;
+  const sc=f=>Math.pow(Math.min(1,f/mx),8);
+  const pos=Int32Array.from(init),fit=new Float64Array(A);
+  for(let a=0;a<A;a++) fit[a]=rawFit(L,pos[a]);
+  const mean=new Float64Array(T+1),uniq=new Float64Array(T+1),hist=keep?new Int32Array((T+1)*A):null,hfit=keep?new Float32Array((T+1)*A):null;
+  const rec=t=>{let s=0;const set=new Set();for(let a=0;a<A;a++){const v=sc(fit[a]);s+=v;set.add(pos[a]);if(hfit)hfit[t*A+a]=v}
+    mean[t]=s/A;uniq[t]=set.size;if(hist) hist.set(pos,t*A)};
+  rec(0);
+  const np=new Int32Array(A),nf=new Float64Array(A);
+  for(let t=1;t<=T;t++){
+    np.set(pos);nf.set(fit);
+    for(let a=0;a<A;a++){
+      let explore=true;
+      if(vel>=1||rng()<vel){
+        let b=-1,bf=fit[a];const nb=adj[a];
+        for(let k=0;k<nb.length;k++){const o=nb[k];if(fit[o]>bf){bf=fit[o];b=o}}
+        if(b>=0){
+          explore=false;
+          if(err>0){
+            let c=pos[a],diff=pos[a]^pos[b];
+            while(diff){const low=diff&-diff;if(rng()>=err) c^=low;diff^=low}
+            const cf=rawFit(L,c);if(cf>fit[a]){np[a]=c;nf[a]=cf}
+          } else {np[a]=pos[b];nf[a]=bf}
+        }
+      }
+      if(explore){const c=pos[a]^(1<<Math.floor(rng()*N));const cf=rawFit(L,c);if(cf>fit[a]){np[a]=c;nf[a]=cf}}
+    }
+    pos.set(np);fit.set(nf);rec(t);
+  }
+  return {mean,uniq,hist,hfit};
+}
+
+/* ---------- Presets ---------- */
+const C=(net,o={})=>Object.assign({net,param:NETS[net].def||0,vel:100,err:0},o);
+const PRESETS=[
+  {id:"basic",label:"Linear vs. fully connected",fig:"Fig. 4–5",N:20,K:5,T:100,conds:[C("linear"),C("full")],
+   note:"<b>What to look for.</b> In the paper the fully connected network climbs fastest and then stalls, because within a round or two nearly everyone has copied the single best starting solution. The linear network keeps many solutions alive (watch the right-hand chart) and overtakes it, in the paper at around round 18. Switch the networks to “Colour by solution” and play from round 0."},
+  {id:"sw",label:"Adding shortcuts",fig:"Fig. 7, 9",N:20,K:5,T:100,conds:[C("lattice"),C("smallworld",{param:5}),C("smallworld",{param:20}),C("smallworld",{param:50})],
+   note:"<b>What to look for.</b> Every condition here has the same number of ties; only the average path length shrinks as shortcuts are added. The paper finds long-run scores fall steadily with each shortcut. Drag the time cursor: at round 10–15 the shortcut-rich networks tend to lead, and by round 55 the order has reversed. Averaging over landscapes makes this much clearer."},
+  {id:"rand",label:"Density in random networks",fig:"Fig. 6",N:20,K:5,T:100,conds:[C("random",{param:2}),C("random",{param:5}),C("random",{param:15}),C("random",{param:50})],
+   note:"<b>What to look for.</b> Very sparse random networks break into isolated groups (see “components” in the readout), and each small group starts from too few solutions. Dense networks lose diversity too fast. The paper finds an inverted U across density, and that among networks that stay in one piece, fewer ties do better in the long run."},
+  {id:"k0",label:"A simple problem (K = 0)",fig:"Fig. 8",N:20,K:0,T:40,conds:[C("linear"),C("full")],
+   note:"<b>What to look for.</b> With no interdependence there is a single peak, so nobody gets stuck. Both networks reach the top and the fully connected one gets there much faster. The cost of efficiency comes from ruggedness. Try moving K to 1: the paper reports that the linear network already wins on average."},
+  {id:"vel",label:"Slowing the flow",fig:"Fig. 10",N:20,K:5,T:60,conds:[C("full"),C("full",{vel:50}),C("full",{vel:20}),C("full",{vel:10})],
+   note:"<b>What to look for.</b> All four are fully connected; they differ only in how often agents look at others. Less frequent looking slows early progress and raises the final score, because agents spend more rounds improving their own starting solutions before the population converges."},
+  {id:"err",label:"Copying errors",fig:"Fig. 11",N:20,K:5,T:300,conds:[C("linear"),C("linear",{err:20}),C("full"),C("full",{err:20})],
+   note:"<b>What to look for.</b> Imperfect copying blends the copier’s solution with the one being copied, which samples new points in between. In the paper it costs a little early on and pays off later, for both networks; long-run performance rises with the error rate."},
+  {id:"custom",label:"Your own design",fig:"",N:20,K:5,T:100,conds:[C("lattice"),C("star"),C("smallworld",{param:10})],
+   note:"<b>Build your own contest.</b> Mix networks, velocity and copying error in the conditions panel. A useful classroom move is to have students predict the ranking at round 10 and at the final round before pressing Play."}
+];
+
+/* ---------- State ---------- */
+const state={preset:"basic",N:20,K:5,A:100,T:100,seed:20071201,conds:[],nLand:25,
+  single:null,avg:null,view:"single",t:0,colorBy:"score",playing:null};
+let L=null,Lkey="";
+function getL(){const k=state.N+"|"+state.K+"|"+state.seed;if(k!==Lkey){L=makeLandscape(state.N,state.K,state.seed);Lkey=k}return L}
+function initPositions(seed,A,N){const r=mulberry32(seed^0x5bd1e995),M=1<<N,init=new Int32Array(A);for(let i=0;i<A;i++) init[i]=Math.floor(r()*M);return init}
+
+function computeSingle(){
+  const LL=getL(),init=initPositions(state.seed,state.A,state.N);
+  state.single=state.conds.map((c,ci)=>{
+    const net=buildNet(c.net,c.param,state.A,mulberry32(state.seed*7+ci*101+3));
+    const res=runSim(LL,net,init,state.T,c.vel/100,c.err/100,mulberry32(state.seed*13+ci*17+5),true);
+    res.net=net;res.edges=edgeList(net);res.stats=netStats(net);return res;
+  });
+}
+
+/* ---------- Theme colours ---------- */
+let TH={};
+function hex(c){c=c.trim();if(c[0]==="#"){if(c.length===4)c="#"+c[1]+c[1]+c[2]+c[2]+c[3]+c[3];return[parseInt(c.slice(1,3),16),parseInt(c.slice(3,5),16),parseInt(c.slice(5,7),16)]}return[128,128,128]}
+function readTheme(){
+  const cs=getComputedStyle(document.documentElement),g=n=>cs.getPropertyValue(n).trim();
+  TH={ink:g("--ink"),muted:g("--muted"),line:g("--line"),edge:g("--edge"),surface:g("--surface"),
+    series:["--s1","--s2","--s3","--s4","--s5"].map(g),ramp:["--r-lo","--r-mid","--r-hi"].map(n=>hex(g(n)))};
+}
+function rampColor(v){v=Math.max(0,Math.min(1,v));const r=TH.ramp;const seg=v<.5?0:1,f=v<.5?v*2:(v-.5)*2;
+  const a=r[seg],b=r[seg+1];return `rgb(${Math.round(a[0]+(b[0]-a[0])*f)},${Math.round(a[1]+(b[1]-a[1])*f)},${Math.round(a[2]+(b[2]-a[2])*f)})`}
+function solColor(x){const h=(Math.imul(x+1,2654435761)>>>0)%360;const dark=TH.surface&&hex(TH.surface)[0]<80;return `hsl(${h},${dark?65:60}%,${dark?62:46}%)`}
+
+/* ---------- Labels ---------- */
+function condLabel(c){let s=NETS[c.net].label;if(NETS[c.net].param) s+=c.net==="random"?` · p ${c.param}%`:` · ${c.param} shortcut${c.param==1?"":"s"}`;
+  if(c.vel<100) s+=` · velocity ${c.vel}%`;if(c.err>0) s+=` · error ${c.err}%`;return s}
+
+/* ---------- Rendering: controls ---------- */
+function renderPresets(){
+  $("#presets").innerHTML=PRESETS.map(p=>`<button class="chip" data-p="${p.id}" aria-pressed="${p.id===state.preset}">${p.label}${p.fig?`<small>${p.fig}</small>`:""}</button>`).join("");
+  const p=PRESETS.find(p=>p.id===state.preset);$("#note").innerHTML=`<p>${p?p.note:""}</p>`;
+}
+function renderGlobals(){
+  const nSel=$("#inN");if(!nSel.options.length) nSel.innerHTML=[10,12,14,16,18,20].map(n=>`<option value="${n}">${n}</option>`).join("");
+  nSel.value=state.N;$("#inA").value=state.A;
+  $("#nHint").textContent=`${(2**state.N).toLocaleString()} possible solutions`;
+  const kmax=Math.min(9,state.N-1);$("#inK").max=kmax;if(state.K>kmax) state.K=kmax;$("#inK").value=state.K;
+  $("#kVal").textContent="= "+state.K;
+  $("#kHint").textContent=state.K===0?"No interdependence: one smooth peak.":`Each choice’s payoff depends on ${state.K} other choice${state.K>1?"s":""}. Higher K, more local peaks.`;
+  $("#inT").value=state.T;$("#tVal").textContent="= "+state.T;
+}
+function renderConds(){
+  const box=$("#conds");
+  box.innerHTML=state.conds.map((c,i)=>{
+    const m=NETS[c.net];
+    return `<div class="cond" ${i===0?'style="border-top:0;padding-top:0"':""}>
+      <div class="cond-head"><span class="sw" style="background:var(--s${i+1})"></span>
+        <select id="c${i}-net" data-i="${i}" data-k="net" aria-label="Network for condition ${i+1}">${Object.entries(NETS).map(([k,v])=>`<option value="${k}" ${k===c.net?"selected":""}>${v.label}</option>`).join("")}</select>
+        <button class="icon-btn" data-rm="${i}" aria-label="Remove condition ${i+1}" ${state.conds.length<=1?"disabled":""}>×</button></div>
+      <div class="mini">
+        ${m.param?`<span>${m.param}</span><input type="range" id="c${i}-param" data-i="${i}" data-k="param" min="${m.min}" max="${m.max}" value="${c.param}"><span class="val">${c.param}</span>`:""}
+        <span>velocity</span><input type="range" id="c${i}-vel" data-i="${i}" data-k="vel" min="5" max="100" step="5" value="${c.vel}"><span class="val">${c.vel}%</span>
+        <span>copy error</span><input type="range" id="c${i}-err" data-i="${i}" data-k="err" min="0" max="50" step="5" value="${c.err}"><span class="val">${c.err}%</span>
+      </div></div>`}).join("");
+  $("#addCond").disabled=state.conds.length>=5;
+}
+
+/* ---------- Rendering: charts ---------- */
+function setupCanvas(cv){const dpr=window.devicePixelRatio||1,w=cv.clientWidth,h=cv.clientHeight;
+  if(cv.width!==Math.round(w*dpr)||cv.height!==Math.round(h*dpr)){cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr)}
+  const ctx=cv.getContext("2d");ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);return{ctx,w,h}}
+function niceStep(range,target){const raw=range/target,p=10**Math.floor(Math.log10(raw)),n=raw/p;return (n<1.5?1:n<3?2:n<7?5:10)*p}
+const PAD={l:42,r:12,t:10,b:26};
+function drawChart(cv,series,ymax,fmt){
+  const {ctx,w,h}=setupCanvas(cv),T=state.T,pw=w-PAD.l-PAD.r,ph=h-PAD.t-PAD.b;
+  const X=t=>PAD.l+t/T*pw,Y=v=>PAD.t+ph-(v/ymax)*ph;
+  ctx.font="11px 'IBM Plex Mono', ui-monospace, monospace";ctx.lineWidth=1;
+  const ys=niceStep(ymax,5);ctx.textAlign="right";ctx.textBaseline="middle";
+  for(let v=0;v<=ymax+1e-9;v+=ys){ctx.strokeStyle=TH.line;ctx.beginPath();ctx.moveTo(PAD.l,Y(v)+.5);ctx.lineTo(w-PAD.r,Y(v)+.5);ctx.stroke();ctx.fillStyle=TH.muted;ctx.fillText(fmt(v),PAD.l-6,Y(v))}
+  const xs=niceStep(T,w<420?4:6);ctx.textAlign="center";ctx.textBaseline="top";
+  for(let t=0;t<=T;t+=xs){ctx.fillStyle=TH.muted;ctx.fillText(String(t),X(t),PAD.t+ph+6)}
+  series.forEach((s,i)=>{ctx.strokeStyle=TH.series[i];ctx.lineWidth=2;ctx.lineJoin="round";ctx.beginPath();
+    for(let t=0;t<=T;t++){const x=X(t),y=Y(s[t]);t?ctx.lineTo(x,y):ctx.moveTo(x,y)}ctx.stroke()});
+  const t=state.t,cx=Math.round(X(t))+.5;ctx.strokeStyle=TH.ink;ctx.globalAlpha=.5;ctx.lineWidth=1;ctx.setLineDash([3,3]);
+  ctx.beginPath();ctx.moveTo(cx,PAD.t);ctx.lineTo(cx,PAD.t+ph);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;
+  series.forEach((s,i)=>{ctx.fillStyle=TH.series[i];ctx.strokeStyle=TH.surface;ctx.lineWidth=2;ctx.beginPath();ctx.arc(X(t),Y(s[t]),4,0,7);ctx.fill();ctx.stroke()});
+}
+function curData(){return state.view==="avg"&&state.avg?state.avg:{mean:state.single.map(s=>s.mean),uniq:state.single.map(s=>s.uniq)}}
+function drawCharts(){
+  if(!state.single) return;const d=curData();
+  drawChart($("#cScore"),d.mean,1,v=>v.toFixed(1));
+  let um=0;d.uniq.forEach(u=>{for(const v of u) if(v>um) um=v});
+  const umax=Math.max(5,Math.ceil(um/10)*10);
+  drawChart($("#cUniq"),d.uniq,umax,v=>String(Math.round(v)));
+}
+
+/* ---------- Rendering: networks ---------- */
+function layoutPos(type,A,size){const c=size/2,r=size/2-8,p=new Float32Array(A*2);
+  for(let i=0;i<A;i++){let ang,rr=r;if(type==="star"){if(i===0){p[0]=c;p[1]=c;continue}ang=-Math.PI/2+2*Math.PI*(i-1)/(A-1)}else ang=-Math.PI/2+2*Math.PI*i/A;
+    p[i*2]=c+rr*Math.cos(ang);p[i*2+1]=c+rr*Math.sin(ang)}return p}
+function renderNetCards(){
+  $("#nets").innerHTML=state.conds.map((c,i)=>`<div class="net"><div class="name"><span class="sw" style="background:var(--s${i+1})"></span><span>${condLabel(c)}</span></div><canvas id="net${i}" aria-label="Network snapshot for ${condLabel(c)}"></canvas><div class="stat" id="nst${i}"></div></div>`).join("");
+}
+function drawNets(){
+  if(!state.single) return;const A=state.A,t=state.t;
+  state.single.forEach((s,i)=>{
+    const cv=document.getElementById("net"+i);if(!cv) return;
+    const {ctx,w}=setupCanvas(cv);if(w<10) return;
+    const P=layoutPos(state.conds[i].net,A,w),E=s.edges,ne=E.length/2;
+    ctx.strokeStyle=TH.edge;ctx.lineWidth=.8;ctx.globalAlpha=ne>1500?.05:ne>400?.18:.55;ctx.beginPath();
+    for(let k=0;k<E.length;k+=2){const a=E[k],b=E[k+1];ctx.moveTo(P[a*2],P[a*2+1]);ctx.lineTo(P[b*2],P[b*2+1])}
+    ctx.stroke();ctx.globalAlpha=1;
+    const rad=A>150?2.6:A>60?3.4:4.4;
+    for(let a=0;a<A;a++){const x=s.hist[t*A+a];
+      ctx.fillStyle=state.colorBy==="sol"?solColor(x):rampColor(Math.pow(s.hfit[t*A+a],1/2.2));
+      ctx.beginPath();ctx.arc(P[a*2],P[a*2+1],rad,0,7);ctx.fill()}
+    const st=s.stats;
+    document.getElementById("nst"+i).textContent=`density ${(st.density*100).toFixed(1)}% · path ${st.path.toFixed(1)} · ${st.components} comp.`;
+  });
+}
+
+/* ---------- Readout & wins ---------- */
+function renderReadout(){
+  if(!state.single) return;const d=curData(),t=state.t,T=state.T;
+  $("#readout").innerHTML=`<thead><tr><th>Condition</th><th class="n">Score, round ${t}</th><th class="n">Distinct, round ${t}</th><th class="n">Final score</th><th class="n">Avg path</th><th class="n">Components</th></tr></thead><tbody>`+
+    state.conds.map((c,i)=>{const st=state.single[i].stats;return `<tr><td><span class="sw" style="display:inline-block;vertical-align:-1px;margin-right:6px;background:var(--s${i+1})"></span>${condLabel(c)}</td>
+      <td class="n">${d.mean[i][t].toFixed(3)}</td><td class="n">${d.uniq[i][t].toFixed(state.view==="avg"?1:0)}</td><td class="n">${d.mean[i][T].toFixed(3)}</td><td class="n">${st.path.toFixed(2)}</td><td class="n">${st.components}</td></tr>`}).join("")+"</tbody>";
+  $("#tLabel").textContent="Round "+t;$("#scrub").value=t;
+  $("#status").textContent=state.view==="avg"&&state.avg?`mean of ${state.avg.n} landscapes`:`landscape #${state.seed%100000}`;
+}
+function renderWins(){
+  const show=state.view==="avg"&&state.avg;$("#winsPanel").hidden=!show;if(!show) return;
+  const W=state.avg.wins,n=W.length,lab=i=>`<span class="sw" style="display:inline-block;vertical-align:-1px;margin-right:6px;background:var(--s${i+1})"></span>${condLabel(state.conds[i])}`;
+  let h=`<thead><tr><th>Row beat column</th>${W.map((_,j)=>`<th class="n"><span class="sw" style="display:inline-block;background:var(--s${j+1})"></span> ${j+1}</th>`).join("")}</tr></thead><tbody>`;
+  for(let i=0;i<n;i++) h+=`<tr><td>${i+1}. ${lab(i)}</td>${W[i].map((v,j)=>`<td class="n">${i===j?"–":v}</td>`).join("")}</tr>`;
+  $("#wins").innerHTML=h+`</tbody><caption style="caption-side:bottom;text-align:left;font-size:12px;color:var(--muted);padding-top:6px">Out of ${state.avg.n} landscapes.</caption>`;
+}
+function renderTabs(){
+  $("#tabSingle").setAttribute("aria-selected",state.view==="single");
+  $("#tabAvg").setAttribute("aria-selected",state.view==="avg");
+  $("#tabAvg").disabled=!state.avg;$("#tabAvg").textContent=state.avg?`Average of ${state.avg.n}`:"Average";
+}
+function renderFrame(){drawCharts();drawNets();renderReadout()}
+function renderAll(){renderPresets();renderGlobals();renderConds();renderNetCards();renderTabs();renderWins();
+  $("#scrub").max=state.T;renderFrame();
+  $("#rampLegend").hidden=state.colorBy!=="score";}
+
+/* ---------- Actions ---------- */
+let recomputeTimer=null;
+function invalidate(rebuildCards){stop();state.avg=null;state.view="single";
+  clearTimeout(recomputeTimer);$("#status").textContent="computing…";
+  recomputeTimer=setTimeout(()=>{computeSingle();state.t=Math.min(state.t,state.T);renderAll()},rebuildCards?0:180);}
+function loadPreset(id){const p=PRESETS.find(p=>p.id===id);state.preset=id;state.N=p.N;state.K=p.K;state.T=p.T;
+  state.conds=p.conds.map(c=>Object.assign({},c));state.t=0;invalidate(true)}
+function stop(){if(state.playing){clearInterval(state.playing);state.playing=null}$("#play").textContent="Play"}
+function play(){if(state.playing){stop();return}if(state.t>=state.T) state.t=0;
+  $("#play").textContent="Pause";
+  state.playing=setInterval(()=>{if(state.t>=state.T){stop();return}state.t++;renderFrame()},+$("#speed").value)}
+
+let cancelBatch=false;
+async function runAverage(){
+  if($("#runAvg").dataset.running){cancelBatch=true;return}
+  stop();cancelBatch=false;const n=state.nLand,T=state.T,A=state.A,nc=state.conds.length;
+  const mean=state.conds.map(()=>new Float64Array(T+1)),uniq=state.conds.map(()=>new Float64Array(T+1)),fin=state.conds.map(()=>[]);
+  $("#runAvg").dataset.running="1";$("#runAvg").textContent="Stop";$("#newLand").disabled=true;
+  const pb=$("#prog");pb.hidden=false;const bar=pb.firstElementChild;bar.style.width="0%";
+  let done=0;
+  for(let l=0;l<n&&!cancelBatch;l++){
+    const sd=(state.seed+(l+1)*7919)>>>0,LL=makeLandscape(state.N,state.K,sd),init=initPositions(sd,A,state.N);
+    for(let ci=0;ci<nc;ci++){const c=state.conds[ci];
+      const net=buildNet(c.net,c.param,A,mulberry32(sd*7+ci*101+3));
+      const r=runSim(LL,net,init,T,c.vel/100,c.err/100,mulberry32(sd*13+ci*17+5),false);
+      for(let t=0;t<=T;t++){mean[ci][t]+=r.mean[t];uniq[ci][t]+=r.uniq[t]}fin[ci].push(r.mean[T])}
+    done++;bar.style.width=(done/n*100)+"%";$("#avgHint").textContent=`Running landscape ${done} of ${n}…`;
+    await new Promise(r=>setTimeout(r,0));
+  }
+  delete $("#runAvg").dataset.running;$("#runAvg").textContent="Run average";$("#newLand").disabled=false;pb.hidden=true;
+  if(done===0){$("#avgHint").textContent="Stopped before any landscape finished.";return}
+  for(let ci=0;ci<nc;ci++) for(let t=0;t<=T;t++){mean[ci][t]/=done;uniq[ci][t]/=done}
+  const wins=state.conds.map((_,i)=>state.conds.map((_,j)=>{let w=0;for(let k=0;k<done;k++) if(fin[i][k]>fin[j][k]+1e-12) w++;return w}));
+  state.avg={n:done,mean,uniq,wins};state.view="avg";
+  $("#avgHint").textContent=cancelBatch?`Stopped early: averaged ${done} landscapes.`:`Averaged ${done} landscapes. Single landscapes are noisy; the paper averages 1,000.`;
+  renderTabs();renderWins();renderFrame();
+}
+
+/* ---------- Events ---------- */
+$("#presets").addEventListener("click",e=>{const b=e.target.closest("[data-p]");if(b) loadPreset(b.dataset.p)});
+$("#inN").addEventListener("change",e=>{state.N=+e.target.value;state.preset="custom";renderPresets();renderGlobals();invalidate()});
+$("#inA").addEventListener("change",e=>{state.A=+e.target.value;invalidate(true)});
+$("#inK").addEventListener("input",e=>{state.K=+e.target.value;state.preset="custom";renderPresets();renderGlobals();invalidate()});
+$("#inT").addEventListener("input",e=>{state.T=+e.target.value;renderGlobals();invalidate()});
+$("#conds").addEventListener("input",e=>{const el=e.target,i=+el.dataset.i,k=el.dataset.k;if(!k) return;
+  const c=state.conds[i];
+  if(k==="net"){c.net=el.value;c.param=NETS[c.net].def||0;renderConds();renderNetCards();invalidate(true);}
+  else{c[k]=+el.value;el.nextElementSibling.textContent=el.value+(k==="param"?"":"%");
+    const nm=document.querySelectorAll(".net .name span:last-child")[i];if(nm) nm.textContent=condLabel(c);invalidate()}
+  state.preset="custom";renderPresets()});
+$("#conds").addEventListener("click",e=>{const b=e.target.closest("[data-rm]");if(!b) return;state.conds.splice(+b.dataset.rm,1);state.preset="custom";invalidate(true)});
+$("#addCond").addEventListener("click",()=>{if(state.conds.length>=5) return;state.conds.push(C("lattice"));state.preset="custom";invalidate(true)});
+$("#newLand").addEventListener("click",()=>{state.seed=(Math.floor(Math.random()*1e9))>>>0;state.t=0;invalidate(true)});
+$("#inL").addEventListener("change",e=>{state.nLand=+e.target.value});
+$("#runAvg").addEventListener("click",runAverage);
+$("#tabSingle").addEventListener("click",()=>{state.view="single";renderTabs();renderWins();renderFrame()});
+$("#tabAvg").addEventListener("click",()=>{if(!state.avg) return;state.view="avg";renderTabs();renderWins();renderFrame()});
+$("#play").addEventListener("click",play);
+$("#scrub").addEventListener("input",e=>{stop();state.t=+e.target.value;renderFrame()});
+$("#speed").addEventListener("change",()=>{if(state.playing){stop();play()}});
+$("#colorBy").addEventListener("change",e=>{state.colorBy=e.target.value;$("#rampLegend").hidden=state.colorBy!=="score";drawNets()});
+["#cScore","#cUniq"].forEach(id=>{const cv=$(id);
+  const setT=e=>{const r=cv.getBoundingClientRect(),pw=r.width-PAD.l-PAD.r;
+    state.t=Math.max(0,Math.min(state.T,Math.round((e.clientX-r.left-PAD.l)/pw*state.T)));stop();renderFrame()};
+  cv.addEventListener("pointerdown",e=>{cv.setPointerCapture(e.pointerId);setT(e)});
+  cv.addEventListener("pointermove",e=>{if(e.buttons) setT(e)});
+});
+let rz;new ResizeObserver(()=>{clearTimeout(rz);rz=setTimeout(()=>{drawCharts();drawNets()},60)}).observe(document.querySelector(".results"));
+const reTheme=()=>{readTheme();drawCharts();drawNets()};
+try{matchMedia("(prefers-color-scheme: dark)").addEventListener("change",reTheme)}catch(e){}
+new MutationObserver(reTheme).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
+
+/* ---------- Boot ---------- */
+readTheme();
+const p0=PRESETS[0];state.conds=p0.conds.map(c=>Object.assign({},c));
+computeSingle();state.t=state.T;renderAll();
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>{drawCharts()});
+})();
+</script>
+
+</body></html>
